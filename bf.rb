@@ -33,9 +33,33 @@ class Bf
     when  '.' then @out.putc @bytes[@cur]
     when  ',' then @bytes[@cur] = getc
     when  '[' # ポインタが指す値が0なら、対応する ] の直後にジャンプする。C言語の「while(*ptr){」に相当。
-      raise 'NotImplemented'
+      return idx + 1 if @bytes[@cur] != 0
+      bracket_count = 0
+      loop do
+        idx += 1
+        case @input[idx]
+        when '['
+          bracket_count += 1
+        when ']'
+          return idx + 1 if bracket_count == 0
+          bracket_count -= 1
+        end
+      end
+      raise 'not reach'
     when  ']' # ポインタが指す値が0でないなら、対応する [ （の直後[1]）にジャンプする。C言語の「}」に相当[2]。
-      raise 'NotImplemented'
+      return idx + 1 if @bytes[@cur] == 0
+      bracket_count = 0
+      loop do
+        idx -= 1
+        case @input[idx]
+        when ']'
+          bracket_count += 1
+        when '['
+          return idx + 1 if bracket_count == 0
+          bracket_count -= 1
+        end
+      end
+      raise 'not reach'
     end
     idx + 1
   end
