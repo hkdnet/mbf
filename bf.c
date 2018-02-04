@@ -49,27 +49,40 @@ int process(tape_t* t, int idx, char* b, FILE*in, FILE* out)
     return idx;
 }
 
-int run(FILE* f)
+tape_t* malloc_tape(FILE* f)
 {
-    int idx, status;
-    char* b;
+    int status;
     tape_t* t;
-    idx = 0;
-    b = malloc(30000);
     t = malloc(sizeof(tape_t));
     t->size = TAPE_SIZE;
     t->head = 0;
     t->tape = malloc(t->size);
     status = fread(t->tape, t->size, 1, f);
     if (!feof(f)) {
-        return 1; // read error or too long
+        exit(1); // read error or too long
     }
+    return t;
+}
+void
+free_tape(tape_t* t)
+{
+    free(t->tape);
+    free(t);
+}
+
+int run(FILE* f)
+{
+    int idx;
+    char* b;
+    tape_t* t;
+    idx = 0;
+    b = malloc(30000);
+    t = malloc_tape(f);
     while(!tape_end_p(t)) {
         idx = process(t, idx, b, stdin, stdout);
     }
     free(b);
-    free(t->tape);
-    free(t);
+    free_tape(t);
     return 0;
 }
 
