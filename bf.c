@@ -106,8 +106,12 @@ int run(FILE* f)
 
 int main(int argc, char const* argv[])
 {
+    if (argc != 2) {
+        fprintf(stderr, "USAGE: %s PATH\n", argv[0]);
+        exit(1);
+    }
     FILE* f;
-    f = fopen("./input/hoge", "r");
+    f = fopen(argv[1], "r");
     if (!f) {
         perror("fopen");
         exit(1);
