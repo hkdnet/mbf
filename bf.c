@@ -50,6 +50,11 @@ void free_tape(tape_t* t)
     free(t);
 }
 
+char peek_tape(tape_t* t)
+{
+    return t->tape[t->head];
+}
+
 char read_tape_bang(tape_t* t)
 {
     char c = t->tape[t->head];
@@ -57,9 +62,60 @@ char read_tape_bang(tape_t* t)
     return c;
 }
 
+char bread_tape_bang(tape_t* t)
+{
+    char c = t->tape[t->head];
+    t->head--;
+    return c;
+}
+
 int tape_end_p(tape_t* t)
 {
     return t->tape[t->head] == '\0';
+}
+
+void seek_bracket_f(tape_t* t)
+{
+    char c;
+    int nbracket;
+    nbracket = 0;
+    while(1) {
+        c = read_tape_bang(t);
+        if (c == '[') {
+            nbracket++;
+            continue;
+        }
+        if (c == ']') {
+          if (nbracket == 0) {
+              read_tape_bang(t);
+              return;
+          }
+          nbracket--;
+          continue;
+        }
+    }
+}
+
+void seek_bracket_b(tape_t* t)
+{
+    char c;
+    int nbracket;
+    nbracket = -1;
+    while(1) {
+        c = bread_tape_bang(t);
+        if (c == ']') {
+            nbracket++;
+            continue;
+        }
+        if (c == '[') {
+          if (nbracket == 0) {
+              read_tape_bang(t);
+              return;
+          }
+          nbracket--;
+          continue;
+        }
+    }
 }
 
 void  process(tape_t* t, state_t* s, FILE*in, FILE* out)
@@ -85,8 +141,18 @@ void  process(tape_t* t, state_t* s, FILE*in, FILE* out)
         case ',':
             s->mem[s->idx] = fgetc(out); // TODO: error handling
             return;
-        // case '[':
-        // case ']':
+        case '[':
+            if (s->mem[s->idx] != 0) {
+                return;
+            }
+            seek_bracket_f(t);
+            return;
+        case ']':
+            if (s->mem[s->idx] == 0) {
+                return;
+            }
+            seek_bracket_b(t);
+            return;
     }
 }
 
