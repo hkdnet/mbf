@@ -9,6 +9,26 @@ typedef struct tape {
     char* tape;
 } tape_t;
 
+tape_t* malloc_tape(FILE* f)
+{
+    int status;
+    tape_t* t;
+    t = malloc(sizeof(tape_t));
+    t->size = TAPE_SIZE;
+    t->head = 0;
+    t->tape = malloc(t->size);
+    status = fread(t->tape, t->size, 1, f);
+    if (!feof(f)) {
+        exit(1); // read error or too long
+    }
+    return t;
+}
+void free_tape(tape_t* t)
+{
+    free(t->tape);
+    free(t);
+}
+
 char read_tape_bang(tape_t* t)
 {
     char c = t->tape[t->head];
@@ -47,27 +67,6 @@ int process(tape_t* t, int idx, char* b, FILE*in, FILE* out)
             return idx;
     }
     return idx;
-}
-
-tape_t* malloc_tape(FILE* f)
-{
-    int status;
-    tape_t* t;
-    t = malloc(sizeof(tape_t));
-    t->size = TAPE_SIZE;
-    t->head = 0;
-    t->tape = malloc(t->size);
-    status = fread(t->tape, t->size, 1, f);
-    if (!feof(f)) {
-        exit(1); // read error or too long
-    }
-    return t;
-}
-void
-free_tape(tape_t* t)
-{
-    free(t->tape);
-    free(t);
 }
 
 int run(FILE* f)
