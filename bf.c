@@ -1,11 +1,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int process(char c, int idx, char* b, FILE*in, FILE* out)
+#define TAPE_SIZE 30000
+
+typedef struct tape {
+    int size;
+    int head;
+    char* tape;
+} tape_t;
+
+char read_tape_bang(tape_t* t)
 {
+    char c = t->tape[t->head];
+    t->head++;
+    return c;
+}
+
+int tape_end_p(tape_t* t)
+{
+    return t->tape[t->head] == '\0';
+}
+
+int process(tape_t* t, int idx, char* b, FILE*in, FILE* out)
+{
+    char c;
+    c = read_tape_bang(t);
     switch (c) {
-        case 'a':
-            break;
         case '>':
             return idx + 1;
         case '<':
@@ -31,19 +51,26 @@ int process(char c, int idx, char* b, FILE*in, FILE* out)
 
 int run(FILE* f)
 {
-    int c, idx;
+    int idx, status;
     char* b;
+    tape_t* t;
     idx = 0;
     b = malloc(30000);
-    while((c = fgetc(f)) != EOF) {
-        idx = process(c, idx, b, stdin, stdout);
+    t = malloc(sizeof(tape_t));
+    t->size = TAPE_SIZE;
+    t->head = 0;
+    t->tape = malloc(t->size);
+    status = fread(t->tape, t->size, 1, f);
+    if (!feof(f)) {
+        return 1; // read error or too long
+    }
+    while(!tape_end_p(t)) {
+        idx = process(t, idx, b, stdin, stdout);
     }
     free(b);
-    if (feof(f)) {
-        return 0;
-    } else {
-        return 1;
-    }
+    free(t->tape);
+    free(t);
+    return 0;
 }
 
 int main(int argc, char const* argv[])
