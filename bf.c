@@ -1,13 +1,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define STATE_MEM_SIZE 30000
 #define TAPE_SIZE 30000
+
+typedef struct state {
+    int idx;
+    char* mem;
+} state_t;
 
 typedef struct tape {
     int size;
     int head;
     char* tape;
 } tape_t;
+
+state_t* malloc_state()
+{
+    state_t* s;
+    s = malloc(sizeof(state_t));
+    s->idx = 0;
+    s->mem = malloc(STATE_MEM_SIZE);
+    return s;
+}
+
+void free_state(state_t* s)
+{
+    free(s->mem);
+    free(s);
+}
 
 tape_t* malloc_tape(FILE* f)
 {
@@ -41,47 +62,45 @@ int tape_end_p(tape_t* t)
     return t->tape[t->head] == '\0';
 }
 
-int process(tape_t* t, int idx, char* b, FILE*in, FILE* out)
+void  process(tape_t* t, state_t* s, FILE*in, FILE* out)
 {
     char c;
     c = read_tape_bang(t);
     switch (c) {
         case '>':
-            return idx + 1;
+            s->idx++;
+            return;
         case '<':
-            return idx - 1;
+            s->idx--;
+            return;
         case '+':
-            b[idx]++;
-            return idx;
+            s->mem[s->idx]++;
+            return;
         case '-':
-            b[idx]--;
-            return idx;
+            s->mem[s->idx]--;
+            return;
         case '.':
-            fputc(b[idx], out); // TODO: error handling
-            return idx;
+            fputc(s->mem[s->idx], out); // TODO: error handling
+            return;
         case ',':
-            b[idx] = fgetc(out); // TODO: error handling
-            return idx;
-        case '[':
-        case ']':
-            return idx;
+            s->mem[s->idx] = fgetc(out); // TODO: error handling
+            return;
+        // case '[':
+        // case ']':
     }
-    return idx;
 }
 
 int run(FILE* f)
 {
-    int idx;
-    char* b;
+    state_t* s;
     tape_t* t;
-    idx = 0;
-    b = malloc(30000);
+    s = malloc_state();
     t = malloc_tape(f);
     while(!tape_end_p(t)) {
-        idx = process(t, idx, b, stdin, stdout);
+        process(t, s, stdin, stdout);
     }
-    free(b);
     free_tape(t);
+    free_state(s);
     return 0;
 }
 
